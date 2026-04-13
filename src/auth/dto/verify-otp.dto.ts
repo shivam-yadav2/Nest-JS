@@ -1,13 +1,13 @@
-import { IsNotEmpty, IsNumber , IsString  } from "class-validator";
- 
-
+import { Type } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class VerifyOtpDto {
-    @IsNotEmpty()
-    @IsNumber()
-    userId: number;
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsInt()
+  userId: number;
 
-    @IsNotEmpty()
-    @IsString()
-    code: string;
+  @IsNotEmpty()
+  @IsString()
+  code: string;
 }

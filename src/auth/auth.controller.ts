@@ -1,9 +1,11 @@
-// src/auth/auth.controller.ts
-import { Controller, Post, Get, Put, Body, UseGuards, Req, Res, HttpStatus } from '@nestjs/common';
-import { Response } from 'express';
+import { Body, Controller, Get, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import { FastifyReply } from 'fastify';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RequestOtpDto, VerifyOtpDto, UpdateProfileDto, UserResponseDto } from './dto';
+import { RequestOtpDto } from './dto/request-otp.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,21 +22,23 @@ export class AuthController {
   }
 
   @Post('verify-otp')
-  async verifyOtp(@Body() dto: VerifyOtpDto, @Res() res: Response) {
+  async verifyOtp(@Body() dto: VerifyOtpDto, @Res({ passthrough: true }) reply: FastifyReply) {
     const result = await this.authService.verifyOtp(dto);
 
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
+      path: '/',
     };
 
-    res.cookie('accessToken', result.accessToken, options);
-    res.status(HttpStatus.OK).json({
+    reply.setCookie('accessToken', result.accessToken, options);
+
+    return {
       success: true,
       data: result,
       message: 'OTP verified successfully',
-    });
+    };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -61,18 +65,20 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  async logout(@Res() res: Response) {
+  async logout(@Res({ passthrough: true }) reply: FastifyReply) {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
+      path: '/',
     };
 
-    res.clearCookie('accessToken', options);
-    res.status(HttpStatus.OK).json({
+    reply.clearCookie('accessToken', options);
+
+    return {
       success: true,
       data: null,
       message: 'Logged out successfully',
-    });
+    };
   }
 }

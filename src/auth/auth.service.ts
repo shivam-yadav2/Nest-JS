@@ -1,13 +1,15 @@
-// src/auth/auth.service.ts
-import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
-import { ConfigService } from '@nestjs/config';
 import { User } from './entities/user.entity';
 import { Otp, OtpType } from './entities/otp.entity';
-import { RequestOtpDto, VerifyOtpDto, UpdateProfileDto, UserResponseDto } from './dto';
+import { RequestOtpDto } from './dto/request-otp.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +17,7 @@ export class AuthService {
     @InjectModel(User) private userModel: typeof User,
     @InjectModel(Otp) private otpModel: typeof Otp,
     private configService: ConfigService,
+    private jwtService: JwtService,
   ) {}
 
   private generateOtp(): string {
@@ -32,10 +35,26 @@ export class AuthService {
     // For now, just log it
   }
 
-  async requestOtp(dto: RequestOtpDto): Promise<{ userId: number }> {
-    let user = await this.userModel.findOne({ where: { phone: dto.phone } });
+  private toPublicUser(user: User | null): UserResponseDto {
     if (!user) {
-      user = await this.userModel.create({ phone: dto.phone });
+      return null as never;
+    }
+
+    const rawUser = user.toJSON() as Record<string, unknown>;
+    delete rawUser.passwordHash;
+    return rawUser as UserResponseDto;
+  }
+
+  async requestOtp(dto: RequestOtpDto): Promise<{ userId: number }> {
+    const phone = dto.phone?.trim();
+
+    if (!phone) {
+      throw new BadRequestException('Phone number is required');
+    }
+
+    let user = await this.userModel.findOne({ where: { phone } });
+    if (!user) {
+      user = await this.userModel.create({ phone });
     }
 
     const otpCode = this.generateOtp();
@@ -48,7 +67,7 @@ export class AuthService {
       expiresAt,
     });
 
-    await this.sendOtp(dto.phone, otpCode);
+    await this.sendOtp(phone, otpCode);
 
     return { userId: user.id };
   }
@@ -82,11 +101,9 @@ export class AuthService {
 
     const accessToken = this.generateAccessToken(user.id);
 
-    const loggedInUser = await this.userModel.findByPk(dto.userId, {
-      attributes: { exclude: ['passwordHash'] },
-    });
+    const loggedInUser = await this.userModel.findByPk(dto.userId);
 
-    return { user: loggedInUser.toJSON() as UserResponseDto, accessToken };
+    return { user: this.toPublicUser(loggedInUser), accessToken };
   }
 
   async updateProfile(userId: number, dto: UpdateProfileDto): Promise<UserResponseDto> {
@@ -109,27 +126,23 @@ export class AuthService {
 
     await user.update(updateData);
 
-    const updatedUser = await this.userModel.findByPk(userId, {
-      attributes: { exclude: ['passwordHash'] },
-    });
+    const updatedUser = await this.userModel.findByPk(userId);
 
-    return updatedUser.toJSON() as UserResponseDto;
+    return this.toPublicUser(updatedUser);
   }
 
   async getCurrentUser(userId: number): Promise<UserResponseDto> {
-    const user = await this.userModel.findByPk(userId, {
-      attributes: { exclude: ['passwordHash'] },
-    });
+    const user = await this.userModel.findByPk(userId);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return user.toJSON() as UserResponseDto;
+    return this.toPublicUser(user);
   }
 
   private generateAccessToken(userId: number): string {
     const secret = this.configService.get<string>('jwt.secret');
-    return jwt.sign({ userId }, secret, { expiresIn: '7d' });
+    return this.jwtService.sign({ userId }, { secret, expiresIn: '7d' });
   }
 } 

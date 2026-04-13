@@ -1,18 +1,14 @@
-// src/auth/guards/jwt-auth.guard.ts
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../entities/user.entity';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
+export class JwtAuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     @InjectModel(User) private userModel: typeof User,
-  ) {
-    super();
-  }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -23,7 +19,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify<{ userId: number }>(token);
       const user = await this.userModel.findByPk(payload.userId, {
         attributes: { exclude: ['passwordHash'] },
       });
