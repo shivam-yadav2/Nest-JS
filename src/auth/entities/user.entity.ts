@@ -1,74 +1,82 @@
 // src/auth/entities/user.entity.ts
-import { Table, Column, Model, DataType, Index } from 'sequelize-typescript';
+import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import type {
+  CreationOptional,
+  InferAttributes,
+  InferCreationAttributes,
+} from 'sequelize';
 
 @Table({ tableName: 'users', timestamps: true })
-export class User extends Model<User> {
+export class User extends Model<
+  InferAttributes<User>,
+  InferCreationAttributes<User>
+> {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   })
-  id: number;
+  declare id: CreationOptional<number>;
 
   @Column({
     type: DataType.STRING(255),
     unique: true,
     allowNull: true,
   })
-  email: string;
+  declare email: CreationOptional<string | null>;
 
   @Column({
     type: DataType.STRING(20),
     unique: true,
     allowNull: true,
   })
-  phone: string;
+  declare phone: CreationOptional<string | null>;
 
   @Column({
     type: DataType.STRING(255),
     allowNull: true,
   })
-  passwordHash: string;
+  declare passwordHash: CreationOptional<string | null>;
 
   @Column({
     type: DataType.STRING(255),
     allowNull: true,
   })
-  displayName: string;
+  declare displayName: CreationOptional<string | null>;
 
   @Column({
     type: DataType.STRING(500),
     allowNull: true,
   })
-  avatarUrl: string;
+  declare avatarUrl: CreationOptional<string | null>;
 
   @Column({
     type: DataType.STRING(10),
     defaultValue: 'en',
   })
-  locale: string;
+  declare locale: CreationOptional<string>;
 
   @Column({
     type: DataType.BOOLEAN,
     defaultValue: true,
   })
-  isActive: boolean;
+  declare isActive: CreationOptional<boolean>;
 
   @Column({
     type: DataType.BOOLEAN,
     defaultValue: false,
   })
-  isVerified: boolean;
+  declare isVerified: CreationOptional<boolean>;
 
   @Column({
     type: DataType.DATE,
     allowNull: true,
   })
-  lastLoginAt: Date;
+  declare lastLoginAt: CreationOptional<Date | null>;
 
   @Column({
     type: DataType.JSON,
     defaultValue: {},
   })
-  metadata: object;
+  declare metadata: CreationOptional<Record<string, unknown>>;
 }

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
@@ -40,9 +45,17 @@ export class AuthService {
       return null as never;
     }
 
-    const rawUser = user.toJSON() as Record<string, unknown>;
-    delete rawUser.passwordHash;
-    return rawUser as UserResponseDto;
+    return {
+      id: user.id,
+      email: user.email ?? undefined,
+      phone: user.phone ?? undefined,
+      displayName: user.displayName ?? undefined,
+      avatarUrl: user.avatarUrl ?? undefined,
+      locale: user.locale,
+      isActive: user.isActive,
+      isVerified: user.isVerified,
+      lastLoginAt: user.lastLoginAt ?? undefined,
+    };
   }
 
   async requestOtp(dto: RequestOtpDto): Promise<{ userId: number }> {
@@ -72,7 +85,9 @@ export class AuthService {
     return { userId: user.id };
   }
 
-  async verifyOtp(dto: VerifyOtpDto): Promise<{ user: UserResponseDto; accessToken: string }> {
+  async verifyOtp(
+    dto: VerifyOtpDto,
+  ): Promise<{ user: UserResponseDto; accessToken: string }> {
     const otp = await this.otpModel.findOne({
       where: {
         userId: dto.userId,
@@ -106,7 +121,10 @@ export class AuthService {
     return { user: this.toPublicUser(loggedInUser), accessToken };
   }
 
-  async updateProfile(userId: number, dto: UpdateProfileDto): Promise<UserResponseDto> {
+  async updateProfile(
+    userId: number,
+    dto: UpdateProfileDto,
+  ): Promise<UserResponseDto> {
     const user = await this.userModel.findByPk(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -122,6 +140,42 @@ export class AuthService {
 
     if (dto.password?.trim()) {
       updateData.passwordHash = await this.hashPassword(dto.password);
+    }
+
+    const candidatePhone = dto.phone?.trim();
+    if (candidatePhone && candidatePhone !== user.phone) {
+      const existingPhoneUser = await this.userModel.findOne({
+        where: {
+          phone: candidatePhone,
+          id: { [Op.ne]: userId },
+        },
+      });
+
+      if (existingPhoneUser) {
+        throw new ConflictException({
+          message: 'Phone already exists',
+          error: 'DUPLICATE_PHONE',
+          details: [{ field: 'phone', message: 'phone already exists' }],
+        });
+      }
+    }
+
+    const candidateEmail = dto.email?.trim();
+    if (candidateEmail && candidateEmail !== user.email) {
+      const existingEmailUser = await this.userModel.findOne({
+        where: {
+          email: candidateEmail,
+          id: { [Op.ne]: userId },
+        },
+      });
+
+      if (existingEmailUser) {
+        throw new ConflictException({
+          message: 'Email already exists',
+          error: 'DUPLICATE_EMAIL',
+          details: [{ field: 'email', message: 'email already exists' }],
+        });
+      }
     }
 
     await user.update(updateData);
@@ -145,4 +199,4 @@ export class AuthService {
     const secret = this.configService.get<string>('jwt.secret');
     return this.jwtService.sign({ userId }, { secret, expiresIn: '7d' });
   }
-} 
+}

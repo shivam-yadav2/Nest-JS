@@ -1,5 +1,6 @@
 // src/auth/entities/otp.entity.ts
 import { Table, Column, Model, DataType, ForeignKey } from 'sequelize-typescript';
+import type { CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
 import { User } from './user.entity';
 
 export enum OtpType {
@@ -8,49 +9,49 @@ export enum OtpType {
 }
 
 @Table({ tableName: 'otps', timestamps: true })
-export class Otp extends Model<Otp> {
+export class Otp extends Model<InferAttributes<Otp>, InferCreationAttributes<Otp>> {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   })
-  id: number;
+  declare id: CreationOptional<number>;
 
   @ForeignKey(() => User)
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
   })
-  userId: number;
+  declare userId: number | null;
 
   @Column({
     type: DataType.INTEGER,
     allowNull: true,
   })
-  adminId: number;
+  declare adminId: CreationOptional<number | null>;
 
   @Column({
     type: DataType.STRING(6),
     allowNull: false,
   })
-  code: string;
+  declare code: string;
 
   @Column({
     type: DataType.ENUM(...Object.values(OtpType)),
     allowNull: false,
   })
-  type: OtpType;
+  declare type: OtpType;
 
   @Column({
     type: DataType.DATE,
     allowNull: false,
   })
-  expiresAt: Date;
+  declare expiresAt: Date;
 
   @Column({
     type: DataType.BOOLEAN,
     defaultValue: false,
     allowNull: false,
   })
-  isUsed: boolean;
+  declare isUsed: CreationOptional<boolean>;
 }
