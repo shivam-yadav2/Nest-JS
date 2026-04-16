@@ -22,6 +22,8 @@ import { default as configuration } from './configuration';
         JWT_SECRET: Joi.string().required(),
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
+        VIDEO_HLS_PATH: Joi.string().default('./uploads/hls'),
+        VIDEO_PROCESSED_PATH: Joi.string().default('./uploads/processed'),
         NODE_ENV: Joi.string().default('development'),
       }),
     }),

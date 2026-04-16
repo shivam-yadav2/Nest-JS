@@ -5,9 +5,24 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModuleCustom } from './config/config.module';
 import { databaseConfig } from './config/database.config';
 import { AdminModule } from './admin/admin.module';
+import { CategoryModule } from './category/category.module';
+import { GenreModule } from './genre/genre.module';
+import { LanguageModule } from './language/language.module';
+import { SeriesModule } from './series/series.module';
+import { EpisodeModule } from './episode/episode.module';
 
 @Module({
-  imports: [AuthModule, ConfigModuleCustom, databaseConfig, AdminModule],
+  imports: [
+    AuthModule,
+    ConfigModuleCustom,
+    databaseConfig,
+    AdminModule,
+    CategoryModule,
+    GenreModule,
+    LanguageModule,
+    SeriesModule,
+    EpisodeModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

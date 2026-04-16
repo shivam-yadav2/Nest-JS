@@ -25,6 +25,10 @@ export default () => {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT  || '6379', 10),
   },
+  video: {
+    hlsPath: process.env.VIDEO_HLS_PATH || './uploads/hls',
+    processedPath: process.env.VIDEO_PROCESSED_PATH || './uploads/processed',
+  },
   nodeEnv: process.env.NODE_ENV || 'development',
   };
 };
