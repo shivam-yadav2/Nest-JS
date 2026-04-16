@@ -80,6 +80,9 @@ export class Episode extends Model<
   declare viewCount: CreationOptional<string | number>;
 
   @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 0 })
+  declare processingProgress: CreationOptional<number>;
+
+  @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 0 })
   declare likeCount: CreationOptional<number>;
 
   @Column({
@@ -91,6 +94,9 @@ export class Episode extends Model<
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   declare isActive: CreationOptional<boolean>;
+
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare publishedAt: CreationOptional<Date | null>;
 
   @BelongsTo(() => Series, 'seriesId')
   declare series?: Series;

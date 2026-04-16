@@ -28,6 +28,9 @@ export default () => {
   video: {
     hlsPath: process.env.VIDEO_HLS_PATH || './uploads/hls',
     processedPath: process.env.VIDEO_PROCESSED_PATH || './uploads/processed',
+    chunksPath: process.env.VIDEO_CHUNKS_PATH || './uploads/chunks',
+    thumbnailsPath: process.env.VIDEO_THUMBNAILS_PATH || './uploads/thumbnails',
+    chunkSize: Number(process.env.VIDEO_CHUNK_SIZE || 20 * 1024 * 1024),
   },
   nodeEnv: process.env.NODE_ENV || 'development',
   };

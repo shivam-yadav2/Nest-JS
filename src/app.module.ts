@@ -10,6 +10,7 @@ import { GenreModule } from './genre/genre.module';
 import { LanguageModule } from './language/language.module';
 import { SeriesModule } from './series/series.module';
 import { EpisodeModule } from './episode/episode.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EpisodeModule } from './episode/episode.module';
     LanguageModule,
     SeriesModule,
     EpisodeModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
